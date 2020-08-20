@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
 import express from 'express';
 import cors from 'cors';
@@ -15,7 +16,7 @@ const server = app.listen(PORT, () => {
 
 const io = socketIO(server);
 
-const activeUsers = new Set();
+const activeUsers = new Set<IUser>();
 
 // TODO: Fix any types
 io.on('connection', (socket: any) => {
@@ -23,12 +24,17 @@ io.on('connection', (socket: any) => {
 
   socket.on('new user', (data: IUser) => {
     const { userId, userName } = data;
+    socket.userId = data.userId;
     activeUsers.add({ userId, userName });
     io.emit('new user', [...activeUsers]);
   });
 
   socket.on('disconnect', () => {
-    activeUsers.delete(socket.userId);
+    activeUsers.forEach(user => {
+      if (user.userId === socket.userId) {
+        activeUsers.delete(socket.userId);
+      }
+    });
     io.emit('user disconnected', socket.userId);
   });
 });
