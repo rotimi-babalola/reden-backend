@@ -16,25 +16,29 @@ const server = app.listen(PORT, () => {
 
 const io = socketIO(server);
 
-const activeUsers = new Set<IUser>();
+const activeUsers = new Set<string>();
 
 // TODO: Fix any types
 io.on('connection', (socket: any) => {
   console.log('Made socket connection');
 
   socket.on('new user', (data: IUser) => {
-    const { userId, userName } = data;
-    socket.userId = data.userId;
-    activeUsers.add({ userId, userName });
+    const { userName } = data;
+    socket.userName = userName;
+    activeUsers.add(userName);
     io.emit('new user', [...activeUsers]);
   });
 
   socket.on('disconnect', () => {
-    activeUsers.forEach(user => {
-      if (user.userId === socket.userId) {
-        activeUsers.delete(socket.userId);
+    activeUsers.forEach(userName => {
+      if (userName === socket.userName) {
+        activeUsers.delete(socket.userName);
       }
     });
-    io.emit('user disconnected', socket.userId);
+    io.emit('user disconnected', socket.userName);
+  });
+
+  socket.on('chat message', (data: any) => {
+    io.emit('chat message', data);
   });
 });
